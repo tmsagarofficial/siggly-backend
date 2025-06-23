@@ -1,0 +1,14 @@
+# dependencies
+node_modules/
+.env
+
+# Firebase service account
+*firebase*.json
+
+# logs
+*.log
+
+# editor/system files
+.vscode/
+.DS_Store
+Thumbs.db
