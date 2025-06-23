@@ -1,18 +1,18 @@
 // Basic Express.js server
 const express = require('express');
 const cors = require('cors');
-const admin = require("firebase-admin");
+//const admin = require("firebase-admin");
 
 // Use the actual filename of your service account key
-const serviceAccount = require("./siggly-a8423-firebase-adminsdk-fbsvc-6153cf8efc.json");
+//const serviceAccount = require("./siggly-a8423-firebase-adminsdk-fbsvc-6153cf8efc.json");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: "siggly-a8423.appspot.com"
-});
+//admin.initializeApp({
+//  credential: admin.credential.cert(serviceAccount),
+//  storageBucket: "siggly-a8423.appspot.com"
+//});
 
-const db = admin.firestore();
-const bucket = admin.storage().bucket();
+//const db = admin.firestore();
+//const bucket = admin.storage().bucket();
 
 const app = express();
 app.use(cors());
