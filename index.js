@@ -1,85 +1,45 @@
 // Basic Express.js server
 const express = require('express');
 const cors = require('cors');
-//const admin = require("firebase-admin");
-
-// Use the actual filename of your service account key
-//const serviceAccount = require("./siggly-a8423-firebase-adminsdk-fbsvc-6153cf8efc.json");
-
-//admin.initializeApp({
-//  credential: admin.credential.cert(serviceAccount),
-//  storageBucket: "siggly-a8423.appspot.com"
-//});
-
-//const db = admin.firestore();
-//const bucket = admin.storage().bucket();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// In-memory URL store
 const urlMap = {};
 
-// Test endpoint to confirm Firestore connection
-app.get('/firebase-test', async (req, res) => {
-  try {
-    // Try to get a list of collections
-    const collections = await db.listCollections();
-    res.json({ success: true, collections: collections.map(col => col.id) });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
+// Resolve shortcode and count clicks
 app.get('/api/resolve/:shortcode', (req, res) => {
-  const link = urlMap[req.params.shortcode];
+  const shortcode = req.params.shortcode;
+  const link = urlMap[shortcode];
+
   if (link) {
+    // Increment click count whenever resolve is requested
+    link.clicks += 1;
     res.json(link);
   } else {
     res.status(404).json({ error: 'not found' });
   }
 });
 
+// Simple hello endpoint
 app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello from Express backend!' });
 });
 
-// Redirect short codes
-app.get('/:shortcode', async (req, res) => {
-  const { shortcode } = req.params;
-
-  // Check in-memory first
-  if (urlMap[shortcode]) {
-    return res.redirect(urlMap[shortcode]);
-  }
-
-  // If Firebase fallback is needed (leave as-is or comment out for now)
-  try {
-    const doc = await db.collection('shortLinks').doc(shortcode).get();
-
-    if (!doc.exists) {
-      return res.status(404).send('Short link not found');
-    }
-
-    const { longUrl } = doc.data();
-    return res.redirect(longUrl);
-  } catch (err) {
-    console.error('Redirect error:', err);
-    return res.status(500).send('Internal Server Error');
-  }
-});
-
-
+// Redirect endpoint (if you want to support direct browser access)
 app.get('/:shortcode', (req, res) => {
-  const link = urlMap[req.params.shortcode];
+  const shortcode = req.params.shortcode;
+  const link = urlMap[shortcode];
+
   if (!link) return res.status(404).send('Short link not found');
 
-  link.clicks += 1;
+  link.clicks += 1; // Increment on redirect
   return res.redirect(link.longUrl);
 });
 
-
-
+// Create new short link
 app.post('/api/create', (req, res) => {
   const { longUrl, shortCode, displayText } = req.body;
 
@@ -89,6 +49,7 @@ app.post('/api/create', (req, res) => {
   if (urlMap[shortCode]) {
     return res.status(409).json({ error: 'Short code already exists' });
   }
+
   urlMap[shortCode] = {
     longUrl,
     displayText: displayText || null,
@@ -98,13 +59,13 @@ app.post('/api/create', (req, res) => {
   res.json({ success: true, shortCode });
 });
 
-
+// Stats endpoint
 app.get('/api/stats/:shortcode', (req, res) => {
   const link = urlMap[req.params.shortcode];
   link ? res.json(link) : res.status(404).json({ error: 'not found' });
 });
 
-
+// Server start
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, (err) => {
   if (err) {
